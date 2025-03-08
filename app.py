@@ -1,6 +1,5 @@
 import os
-os.environ["SDL_AUDIODRIVER"] = "dsp"
-os.environ["AUDIODEV"] = "/dev/null"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 import os
 import cv2
