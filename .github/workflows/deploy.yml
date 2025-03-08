@@ -35,6 +35,7 @@ jobs:
         HF_SPACE: ${{ secrets.HF_SPACE }}
         HF_USERNAME: ${{ secrets.HF_USERNAME }}
       run: |
+        git config lfs.allowincompletepush true
         git lfs push --all https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git
 
     - name: Push remaining changes
