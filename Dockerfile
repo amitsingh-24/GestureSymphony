@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender-dev \
+    libasound2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -16,6 +17,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . .
 
 ENV PORT=8080
+ENV MPLCONFIGDIR=/tmp
+
 EXPOSE 8080
 
 CMD ["python", "app.py"]
