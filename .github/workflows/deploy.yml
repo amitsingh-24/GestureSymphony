@@ -1,0 +1,55 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitHub Repo
+        uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+      - name: Install huggingface_hub
+        run: pip install huggingface_hub
+
+      - name: Clone Hugging Face Space Repository
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: "asr24/GestureSymphony" 
+        run: |
+          git clone https://huggingface.co/spaces/$HF_SPACE
+          cd $(basename $HF_SPACE)
+          echo "Cloning complete. Current directory: $(pwd)"
+          cd ..
+      
+      - name: Copy updated code to Space repo
+        env:
+          HF_SPACE: "asr24/GestureSymphony"
+        run: |
+          SPACE_DIR=$(basename $HF_SPACE)
+          rsync -av --exclude='.git' . $SPACE_DIR/
+      
+      - name: Deploy changes to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: "asr24/GestureSymphony"
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+          GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+        run: |
+          export GIT_TERMINAL_PROMPT=0
+          cd $(basename $HF_SPACE)
+          git config --global user.email "$GIT_USER_EMAIL"
+          git config --global user.name "$GIT_USER_NAME"
+          git add .
+          git commit -m "Deploy update via GitHub Actions" || echo "No changes to commit"
+          git push https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git HEAD:main
