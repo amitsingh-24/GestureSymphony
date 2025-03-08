@@ -12,6 +12,7 @@ import threading
 import time
 
 app = Flask(__name__)
+app.config['DEBUG'] = False
 
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
