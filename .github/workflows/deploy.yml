@@ -35,7 +35,7 @@ jobs:
         HF_SPACE: ${{ secrets.HF_SPACE }}
         HF_USERNAME: ${{ secrets.HF_USERNAME }}
       run: |
-        git pull https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git main --rebase
+        git pull --rebase --strategy-option theirs https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git main
 
     - name: Push LFS objects
       env:
