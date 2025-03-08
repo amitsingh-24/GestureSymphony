@@ -24,7 +24,7 @@ jobs:
       - name: Clone Hugging Face Space Repository
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_SPACE: "asr24/GestureSymphony" 
+          HF_SPACE: "asr24/GestureSymphony"
         run: |
           git clone https://huggingface.co/spaces/$HF_SPACE
           cd $(basename $HF_SPACE)
