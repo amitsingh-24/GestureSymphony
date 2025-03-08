@@ -57,8 +57,7 @@ jobs:
           git add songs/*.mp3
           git commit -m "Track MP3 files with Git LFS" || echo "No changes to commit"
           git lfs push --all https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git
-          git push https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git HEAD:main
-    
+        
       - name: Push remaining changes
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
