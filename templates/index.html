@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GestureSymphony</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body { background: #f0f4f8; }
+    .navbar { background: #2C3E50; }
+    .navbar-brand { font-weight: bold; }
+    .jumbotron {
+      background: linear-gradient(135deg, #2980B9, #6DD5FA);
+      color: #fff;
+    }
+    .section { padding: 60px 0; }
+    .video-container, .result-container { margin-top: 20px; }
+    video, canvas {
+      width: 100%;
+      max-width: 640px;
+      height: auto;
+      border: 2px solid #bdc3c7;
+      border-radius: 5px;
+    }
+    #spinner { display: none; }
+    .song-item { padding: 10px; border-bottom: 1px solid #dee2e6; }
+    .song-playing { background: #d4edda; }
+    footer { background: #2C3E50; color: #ccc; padding: 20px 0; }
+    /* Additional styling for new controls */
+    .control-buttons { margin-top: 15px; }
+  </style>
+</head>
+<body data-spy="scroll" data-target="#mainNav" data-offset="70">
+  <!-- Navigation Bar -->
+  <nav id="mainNav" class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="#home">GestureSymphony</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+         aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+         <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+         <ul class="navbar-nav ml-auto">
+           <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+           <li class="nav-item"><a class="nav-link" href="#howto">How to Use</a></li>
+           <li class="nav-item"><a class="nav-link" href="#playlist">Playlist</a></li>
+           <li class="nav-item"><a class="nav-link" href="#demo">Demo</a></li>
+           <li class="nav-item"><a class="nav-link" href="#upload">Upload Song</a></li>
+           <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+         </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Home Section -->
+  <header id="home" class="jumbotron text-center section" style="margin-top: 50px;">
+    <div class="container">
+      <h1 class="display-4">GestureSymphony – Conduct a full symphony using only your hands</h1>
+      <p class="lead">Control your local music with simple hand gestures.</p>
+      <hr class="my-4">
+      <p>Powered by MediaPipe Hands, OpenCV, and pygame, this demo lets you play, pause, skip tracks, adjust volume, and more.</p>
+    </div>
+  </header>
+
+  <!-- How to Use Section -->
+  <section id="howto" class="section">
+    <div class="container">
+      <h2 class="text-center">How to Use</h2>
+      <p class="lead text-center">Follow these steps to get started:</p>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card mb-4">
+            <div class="card-header text-center bg-secondary text-white">Step 1</div>
+            <div class="card-body">
+              <p>Allow webcam access and ensure good lighting with a simple background.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card mb-4">
+            <div class="card-header text-center bg-secondary text-white">Step 2</div>
+            <div class="card-body">
+              <p>Use these gestures:</p>
+              <ul>
+                <li>1 finger → Pause</li>
+                <li>2 fingers → Play</li>
+                <li>3 fingers → Next Track</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card mb-4">
+            <div class="card-header text-center bg-secondary text-white">Step 3</div>
+            <div class="card-body">
+              <p>Click "Capture Frame" to process your gesture and control the music.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Start Music Button -->
+      <div class="text-center">
+        <button id="startBtn" class="btn btn-success btn-lg">Start Music</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Playlist Section (moved up) -->
+  <section id="playlist" class="section bg-light">
+    <div class="container">
+      <h2 class="text-center">Playlist</h2>
+      <div id="songList" class="list-group">
+        {% for song in songs %}
+          <div class="song-item list-group-item {% if song.isPlaying %}song-playing{% endif %}">
+            {{ song.name }} {% if song.isPlaying %} <span class="badge badge-success">Now Playing</span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="text-center mt-3">
+        <button id="refreshPlaylist" class="btn btn-info">Refresh Playlist</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo Section -->
+  <section id="demo" class="section">
+    <div class="container">
+      <h2 class="text-center">Demo</h2>
+      <div class="row video-container">
+        <div class="col-md-6">
+          <h4>Live Video Feed</h4>
+          <!-- Start/Stop Camera Buttons -->
+          <button id="startCamera" class="btn btn-primary btn-block mb-2">Start Camera</button>
+          <button id="stopCamera" class="btn btn-danger btn-block mb-2" style="display: none;">Stop Camera</button>
+          <video id="video" autoplay style="display: none;"></video>
+          <button id="capture" class="btn btn-primary btn-block mt-2" style="display: none;">Capture Frame</button>
+          <!-- Additional Controls: Previous Track and Volume Slider -->
+          <div class="control-buttons mt-3">
+            <button id="prevTrack" class="btn btn-warning btn-block">Previous Track</button>
+            <div class="form-group">
+              <label for="volumeSlider">Volume</label>
+              <input type="range" class="form-control-range" id="volumeSlider" min="0" max="100" value="100">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 result-container">
+          <h4>Processed Result</h4>
+          <img id="processed" class="img-fluid" alt="Processed image will appear here">
+          <div id="spinner" class="text-center mt-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">Processing...</span>
+            </div>
+            <p>Processing...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Upload Section -->
+  <section id="upload" class="section bg-light">
+    <div class="container">
+      <h2 class="text-center">Upload Song</h2>
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+              <input type="file" name="file" id="fileInput" class="form-control-file" accept=".mp3,.wav" required>
+            </div>
+            <button type="submit" class="btn btn-warning btn-block">Upload Song</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="section">
+    <div class="container text-center">
+      <h2>Contact</h2>
+      <p>If you have any questions, connect on <a href="https://www.linkedin.com/in/amit-singh-rajawat-4787a4213/">LinkedIn</a>.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center">
+    <div class="container">
+      <p>&copy; 2025 GestureSymphony. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Hidden Canvas for Capture -->
+  <canvas id="canvas" style="display: none;"></canvas>
+
+  <!-- jQuery and Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Video and Canvas Setup
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const processedImg = document.getElementById('processed');
+    const captureButton = document.getElementById('capture');
+    const spinner = document.getElementById('spinner');
+    const startBtn = document.getElementById('startBtn');
+    const startCameraBtn = document.getElementById('startCamera');
+    const stopCameraBtn = document.getElementById('stopCamera');
+    const refreshPlaylistBtn = document.getElementById('refreshPlaylist');
+    const songList = document.getElementById('songList');
+    const uploadForm = document.getElementById('uploadForm');
+    const prevTrackBtn = document.getElementById('prevTrack');
+    const volumeSlider = document.getElementById('volumeSlider');
+    let stream = null; // to store the media stream
+
+    // Function to start the camera feed
+    function startCamera() {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(function(s) {
+            stream = s;
+            video.srcObject = stream;
+            video.style.display = 'block';
+            captureButton.style.display = 'block';
+            video.play();
+            startCameraBtn.style.display = 'none';
+            stopCameraBtn.style.display = 'block';
+          })
+          .catch(function(err) {
+            console.error("Error accessing the webcam: " + err);
+            alert("Error accessing the webcam. Please ensure it is connected and allowed.");
+          });
+      }
+    }
+
+    // Function to stop the camera feed
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      video.style.display = 'none';
+      captureButton.style.display = 'none';
+      startCameraBtn.style.display = 'block';
+      stopCameraBtn.style.display = 'none';
+    }
+
+    // Start/Stop Camera Button Event Listeners
+    startCameraBtn.addEventListener('click', startCamera);
+    stopCameraBtn.addEventListener('click', stopCamera);
+
+    // Capture Frame and send to /process endpoint
+    captureButton.addEventListener('click', function() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataURL = canvas.toDataURL('image/png');
+      spinner.style.display = 'block';
+      fetch('/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataURL })
+      })
+      .then(response => response.json())
+      .then(data => {
+        spinner.style.display = 'none';
+        processedImg.src = data.processed_image;
+      })
+      .catch(error => {
+        spinner.style.display = 'none';
+        console.error('Error:', error);
+      });
+    });
+
+    // Start Music Button
+    startBtn.addEventListener('click', function() {
+      fetch('/start', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          alert(data.status);
+          refreshPlaylist();
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+    // Previous Track Button
+    prevTrackBtn.addEventListener('click', function() {
+      fetch('/prev', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          alert(data.status);
+          refreshPlaylist();
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+    // Volume Slider Event Listener
+    volumeSlider.addEventListener('input', function() {
+      const vol = volumeSlider.value / 100;
+      fetch('/set_volume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volume: vol })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data.status);
+      })
+      .catch(error => console.error('Error:', error));
+    });
+
+    // Refresh Playlist Function
+    function refreshPlaylist() {
+      fetch('/songs')
+        .then(response => response.json())
+        .then(data => {
+          let html = '';
+          data.songs.forEach(song => {
+            html += `<div class="song-item list-group-item ${song.isPlaying ? 'song-playing' : ''}">
+                        ${song.name} ${song.isPlaying ? '<span class="badge badge-success">Now Playing</span>' : ''}
+                     </div>`;
+          });
+          songList.innerHTML = html;
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    refreshPlaylistBtn.addEventListener('click', refreshPlaylist);
+    // Auto-refresh playlist every 1 second
+    setInterval(refreshPlaylist, 1000);
+
+    // Upload Song Form Submission
+    uploadForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('fileInput');
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert(data.status);
+        refreshPlaylist();
+      })
+      .catch(error => console.error('Error:', error));
+    });
+  </script>
+</body>
+</html>
