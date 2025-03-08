@@ -1,4 +1,8 @@
 import os
+os.environ["SDL_AUDIODRIVER"] = "dsp"
+os.environ["AUDIODEV"] = "/dev/null"
+
+import os
 import cv2
 import mediapipe as mp
 import numpy as np
