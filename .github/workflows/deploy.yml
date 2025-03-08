@@ -57,6 +57,20 @@ jobs:
           git add songs/*.mp3
           git commit -m "Track MP3 files with Git LFS" || echo "No changes to commit"
           git lfs push --all https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git
+          git push https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git HEAD:main
+    
+      - name: Push remaining changes
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: "asr24/GestureSymphony"
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+          GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+        run: |
+          export GIT_TERMINAL_PROMPT=0
+          cd $(basename $HF_SPACE)
+          git config --global user.email "$GIT_USER_EMAIL"
+          git config --global user.name "$GIT_USER_NAME"
           git add .
           git commit -m "Deploy update via GitHub Actions" || echo "No changes to commit"
           git push https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git HEAD:main
