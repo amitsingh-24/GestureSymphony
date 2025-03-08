@@ -29,6 +29,14 @@ jobs:
         git add songs/*.mp3
         git commit -m "Track MP3 files with Git LFS" || echo "No changes to commit"
 
+    - name: Pull latest changes
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        HF_SPACE: ${{ secrets.HF_SPACE }}
+        HF_USERNAME: ${{ secrets.HF_USERNAME }}
+      run: |
+        git pull https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git main --rebase
+
     - name: Push LFS objects
       env:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
