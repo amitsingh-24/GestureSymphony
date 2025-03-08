@@ -54,7 +54,9 @@ jobs:
           git lfs install
           git lfs track "*.mp3"
           git add .gitattributes
+          git add songs/*.mp3
+          git commit -m "Track MP3 files with Git LFS" || echo "No changes to commit"
+          git lfs push --all https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git
           git add .
           git commit -m "Deploy update via GitHub Actions" || echo "No changes to commit"
-          git lfs push --all https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git
           git push https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}.git HEAD:main
