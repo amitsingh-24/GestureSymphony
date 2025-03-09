@@ -21,7 +21,12 @@ COPY . .
 ENV HF_SPACE_HEALTH_PATH=/health
 ENV PORT=8080
 ENV MPLCONFIGDIR=/tmp
+ENV SDL_AUDIODRIVER=pulseaudio
 
 EXPOSE 8080
 
-CMD ["gunicorn", "-w", "1", "--timeout", "120", "-b", "0.0.0.0:8080", "app:app"]
+RUN echo '#!/bin/bash\n\
+pulseaudio --start --exit-idle-time=-1\n\
+exec gunicorn -w 1 --timeout 120 -b 0.0.0.0:$PORT app:app' > entrypoint.sh && chmod +x entrypoint.sh
+
+CMD ["./entrypoint.sh"]
