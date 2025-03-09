@@ -10,14 +10,12 @@ import time
 app = Flask(__name__)
 app.config['DEBUG'] = False
 
-# Define the folder where your video files are stored.
 VIDEO_FOLDER = os.path.join(os.getcwd(), "videos")
 
 @app.route("/health")
 def health():
     return "ok", 200
 
-# Serve video files
 @app.route('/videos/<path:filename>')
 def serve_video(filename):
     return send_from_directory(VIDEO_FOLDER, filename)
@@ -45,7 +43,6 @@ def get_mp_drawing():
         _mp_drawing = mp.solutions.drawing_utils
         return _mp_drawing
 
-# Return a list of video files (adjust extensions as needed)
 def get_playlist():
     return [os.path.join(VIDEO_FOLDER, f) for f in os.listdir(VIDEO_FOLDER)
             if f.lower().endswith(('.mp4', '.webm'))]
@@ -60,7 +57,6 @@ def process_frame(frame):
     drawing_utils = get_mp_drawing()
     results = detector.process(img_rgb)
     
-    # Defaults if no hand is detected
     gesture_text = "No hand detected"
     action_text = "No action"
     

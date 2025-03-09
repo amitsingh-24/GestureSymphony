@@ -87,7 +87,7 @@
             <div class="card-header text-center bg-secondary text-white">Step 3</div>
             <div class="card-body">
               <p>
-                Use gestures to control video:<br>
+                <b>Use gestures to control video:</b><br>
                 - ONE: Pause video<br>
                 - TWO: Play video<br>
                 - THREE: Next video<br>
@@ -268,7 +268,7 @@
           videoPlayer.pause();
         } else if (data.gesture === "THREE" || data.gesture === "FOUR") {
           const now = new Date().getTime();
-          
+
           if (lastActionGesture !== data.gesture || (now - lastActionTime) > 1000) {
             if (data.gesture === "THREE") {
               nextVideo();
