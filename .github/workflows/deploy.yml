@@ -22,11 +22,11 @@ jobs:
       run: |
         git lfs install
 
-    - name: Track MP3 files with Git LFS
+    - name: Track MP4 files with Git LFS
       run: |
-        git lfs track "*.mp3"
+        git lfs track "*.mp4"
         git add .gitattributes
-        git add songs/*.mp3
+        git add videos/*.mp4
         git commit -m "Track MP3 files with Git LFS" || echo "No changes to commit"
 
     - name: Pull latest changes
