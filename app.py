@@ -1,5 +1,6 @@
 import os
 os.environ["SDL_AUDIODRIVER"] = "dummy"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import os
 import cv2
@@ -25,6 +26,11 @@ pygame.mixer.init()
 
 is_paused = False
 music_started = False 
+
+@app.route("/health")
+def health():
+    return "ok", 200
+
 
 SONG_FOLDER = os.path.join(os.getcwd(), "songs")
 
