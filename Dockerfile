@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     libasound2-dev \
     pulseaudio \
+    libmodplug1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
