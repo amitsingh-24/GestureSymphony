@@ -17,9 +17,10 @@ RUN pip install gunicorn
 
 COPY . .
 
+ENV HF_SPACE_HEALTH_PATH=/health
 ENV PORT=8080
 ENV MPLCONFIGDIR=/tmp
 
 EXPOSE 8080
 
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "-w", "4", "--timeout", "120", "-b", "0.0.0.0:8080", "app:app"]

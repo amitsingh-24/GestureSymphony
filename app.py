@@ -1,4 +1,7 @@
 import os
+os.environ["SDL_AUDIODRIVER"] = "dummy"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 import cv2
 import numpy as np
 import base64
@@ -6,19 +9,19 @@ from flask import Flask, render_template, request, jsonify
 import threading
 import time
 
-
-os.environ["SDL_AUDIODRIVER"] = "dummy"
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
 app = Flask(__name__)
 app.config['DEBUG'] = False
+
+@app.route("/health")
+def health():
+    return "ok", 200
 
 def get_hands_detector():
     global _hands_detector
     try:
         return _hands_detector
     except NameError:
-        import mediapipe as mp  
+        import mediapipe as mp
         _mp_hands = mp.solutions.hands
         _hands_detector = _mp_hands.Hands(
             static_image_mode=True,
@@ -36,7 +39,6 @@ def get_mp_drawing():
         _mp_drawing = mp.solutions.drawing_utils
         return _mp_drawing
 
-
 def init_pygame():
     global _pygame_initialized, pygame
     try:
@@ -47,15 +49,9 @@ def init_pygame():
         _pygame_initialized = True
         return _pygame_initialized
 
-
-@app.route("/health")
-def health():
-    return "ok", 200
-
 SONG_FOLDER = os.path.join(os.getcwd(), "songs")
 
 def get_playlist():
-    """Return a list of full paths to all songs in SONG_FOLDER."""
     return [os.path.join(SONG_FOLDER, f) for f in os.listdir(SONG_FOLDER)
             if f.lower().endswith(('.mp3', '.wav'))]
 
@@ -64,15 +60,14 @@ current_song_index = 0
 is_paused = False
 music_started = False
 
-
 def play_song():
     global current_song_index, playlist, is_paused
-    init_pygame() 
+    init_pygame()
     if not playlist:
         print("No songs in playlist.")
         return
     is_paused = False
-    import pygame 
+    import pygame
     if not pygame.mixer.music.get_busy():
         pygame.mixer.music.load(playlist[current_song_index])
         pygame.mixer.music.play()
@@ -135,7 +130,7 @@ def count_fingers(hand_landmarks, image_width, image_height):
 
 def process_frame(frame):
     img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    detector = get_hands_detector() 
+    detector = get_hands_detector()
     drawing_utils = get_mp_drawing()
     results = detector.process(img_rgb)
     
@@ -144,7 +139,7 @@ def process_frame(frame):
     
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
-            drawing_utils.draw_landmarks(frame, hand_landmarks, get_hands_detector().Connection)
+            drawing_utils.draw_landmarks(frame, hand_landmarks, detector.Connection)
             image_height, image_width, _ = frame.shape
             finger_count = count_fingers(hand_landmarks, image_width, image_height)
             if finger_count == 1:
