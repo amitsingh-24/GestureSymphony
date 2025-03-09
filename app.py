@@ -1,36 +1,56 @@
 import os
-os.environ["SDL_AUDIODRIVER"] = "dummy"
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
-import os
 import cv2
-import mediapipe as mp
 import numpy as np
 import base64
 from flask import Flask, render_template, request, jsonify
-import pygame
 import threading
 import time
+
+
+os.environ["SDL_AUDIODRIVER"] = "dummy"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 app = Flask(__name__)
 app.config['DEBUG'] = False
 
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
+def get_hands_detector():
+    global _hands_detector
+    try:
+        return _hands_detector
+    except NameError:
+        import mediapipe as mp  
+        _mp_hands = mp.solutions.hands
+        _hands_detector = _mp_hands.Hands(
+            static_image_mode=True,
+            max_num_hands=1,
+            min_detection_confidence=0.7
+        )
+        return _hands_detector
 
-hands_detector = mp_hands.Hands(static_image_mode=True,
-                                max_num_hands=1,
-                                min_detection_confidence=0.7)
+def get_mp_drawing():
+    global _mp_drawing
+    try:
+        return _mp_drawing
+    except NameError:
+        import mediapipe as mp
+        _mp_drawing = mp.solutions.drawing_utils
+        return _mp_drawing
 
-pygame.mixer.init()
 
-is_paused = False
-music_started = False 
+def init_pygame():
+    global _pygame_initialized, pygame
+    try:
+        return _pygame_initialized
+    except NameError:
+        import pygame
+        pygame.mixer.init()
+        _pygame_initialized = True
+        return _pygame_initialized
+
 
 @app.route("/health")
 def health():
     return "ok", 200
-
 
 SONG_FOLDER = os.path.join(os.getcwd(), "songs")
 
@@ -41,14 +61,18 @@ def get_playlist():
 
 playlist = get_playlist()
 current_song_index = 0
+is_paused = False
+music_started = False
+
 
 def play_song():
-    """Play (or unpause) the current song."""
     global current_song_index, playlist, is_paused
+    init_pygame() 
     if not playlist:
         print("No songs in playlist.")
         return
     is_paused = False
+    import pygame 
     if not pygame.mixer.music.get_busy():
         pygame.mixer.music.load(playlist[current_song_index])
         pygame.mixer.music.play()
@@ -58,15 +82,17 @@ def play_song():
         print("Unpaused")
 
 def pause_song():
-    """Pause the current song."""
     global is_paused
+    init_pygame()
+    import pygame
     pygame.mixer.music.pause()
     is_paused = True
     print("Paused")
 
 def next_song():
-    """Move to the next song in the playlist and play it."""
     global current_song_index, playlist, is_paused
+    init_pygame()
+    import pygame
     if not playlist:
         return
     current_song_index = (current_song_index + 1) % len(playlist)
@@ -76,8 +102,9 @@ def next_song():
     print(f"Next Track: {os.path.basename(playlist[current_song_index])}")
 
 def prev_song():
-    """Move to the previous song in the playlist and play it."""
     global current_song_index, playlist, is_paused
+    init_pygame()
+    import pygame
     if not playlist:
         return
     current_song_index = (current_song_index - 1) % len(playlist)
@@ -87,13 +114,6 @@ def prev_song():
     print(f"Previous Track: {os.path.basename(playlist[current_song_index])}")
 
 def control_music(command):
-    """
-    Execute a media control command based on the detected gesture.
-    Mapping:
-      - "Play" → Play/Unpause current song
-      - "Pause" → Pause the song
-      - "Next" → Next song in the playlist
-    """
     print("Executing Music Command:", command)
     if command == "Play":
         play_song()
@@ -103,15 +123,9 @@ def control_music(command):
         next_song()
 
 def count_fingers(hand_landmarks, image_width, image_height):
-    """
-    Count the number of extended fingers using hand landmarks.
-    For index, middle, ring, and pinky fingers, check if the tip is above the PIP joint.
-    (The thumb is ignored in this implementation.)
-    """
     landmarks = []
     for lm in hand_landmarks.landmark:
         landmarks.append((int(lm.x * image_width), int(lm.y * image_height)))
-    
     finger_tips = [8, 12, 16, 20]
     count = 0
     for tip in finger_tips:
@@ -120,24 +134,19 @@ def count_fingers(hand_landmarks, image_width, image_height):
     return count
 
 def process_frame(frame):
-    """
-    Process the input frame using MediaPipe Hands.
-    Detects hand landmarks, counts extended fingers (ignoring thumb),
-    maps the count to a gesture, and triggers a corresponding music command.
-    """
     img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = hands_detector.process(img_rgb)
+    detector = get_hands_detector() 
+    drawing_utils = get_mp_drawing()
+    results = detector.process(img_rgb)
     
     gesture_text = "No hand detected"
     music_command = "None"
     
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
-            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            drawing_utils.draw_landmarks(frame, hand_landmarks, get_hands_detector().Connection)
             image_height, image_width, _ = frame.shape
             finger_count = count_fingers(hand_landmarks, image_width, image_height)
-            
-            # Mapping: 1 finger → Pause, 2 fingers → Play, 3 fingers → Next
             if finger_count == 1:
                 gesture_text = "ONE"
                 music_command = "Pause"
@@ -150,7 +159,6 @@ def process_frame(frame):
             else:
                 gesture_text = {0: "Fist", 4: "FOUR", 5: "FIVE"}.get(finger_count, "Unknown")
                 music_command = "None"
-            
             if music_command != "None":
                 control_music(music_command)
             break
@@ -158,7 +166,6 @@ def process_frame(frame):
                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
     return frame
 
-# On full page refresh, remove temporary songs (files starting with "temp_") that are not currently playing.
 @app.route('/')
 def index():
     global playlist, current_song_index
@@ -166,7 +173,6 @@ def index():
     current_song_path = None
     if playlist and current_song_index < len(playlist):
         current_song_path = playlist[current_song_index]
-    # Delete any temporary songs not currently playing.
     for f in os.listdir(SONG_FOLDER):
         if f.startswith("temp_"):
             temp_file = os.path.join(SONG_FOLDER, f)
@@ -213,6 +219,7 @@ def prev_track():
 def set_volume():
     data = request.get_json()
     vol = data.get('volume', 1.0)
+    import pygame
     pygame.mixer.music.set_volume(float(vol))
     return jsonify({"status": f"Volume set to {vol}"})
 
@@ -235,23 +242,19 @@ def upload_song():
     file = request.files['file']
     if file.filename == "":
         return jsonify({"status": "No file selected"}), 400
-    
-    # Delete any previously uploaded temporary song
     for f in os.listdir(SONG_FOLDER):
         if f.startswith("temp_"):
             os.remove(os.path.join(SONG_FOLDER, f))
-    
     filename = "temp_" + file.filename
     filepath = os.path.join(SONG_FOLDER, filename)
     file.save(filepath)
     return jsonify({"status": "Uploaded", "filename": filename})
 
 def auto_next_song():
-    """Background thread to automatically play the next song when the current one finishes,
-    but only if music has been started by the user."""
     global is_paused, music_started
     while True:
         time.sleep(1)
+        import pygame
         if music_started and (not is_paused) and (not pygame.mixer.music.get_busy()):
             next_song()
 
@@ -259,4 +262,4 @@ threading.Thread(target=auto_next_song, daemon=True).start()
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port)
