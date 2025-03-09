@@ -2,4 +2,3 @@ flask
 opencv-python
 mediapipe
 pygame
-numpy

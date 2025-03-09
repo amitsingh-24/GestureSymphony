@@ -23,4 +23,4 @@ ENV MPLCONFIGDIR=/tmp
 
 EXPOSE 8080
 
-CMD ["gunicorn", "-w", "4", "--timeout", "120", "-b", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "-w", "1", "--timeout", "120", "-b", "0.0.0.0:8080", "app:app"]
