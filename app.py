@@ -139,7 +139,8 @@ def process_frame(frame):
     
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
-            drawing_utils.draw_landmarks(frame, hand_landmarks, detector.Connection)
+            import mediapipe as mp
+            drawing_utils.draw_landmarks(frame, hand_landmarks, mp.solutions.hands.HAND_CONNECTIONS)
             image_height, image_width, _ = frame.shape
             finger_count = count_fingers(hand_landmarks, image_width, image_height)
             if finger_count == 1:
