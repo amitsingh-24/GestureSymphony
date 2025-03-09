@@ -23,11 +23,9 @@
       border-radius: 5px;
     }
     #spinner { display: none; }
-    .song-item { padding: 10px; border-bottom: 1px solid #dee2e6; }
-    .song-playing { background: #d4edda; }
+    .video-item { padding: 10px; border-bottom: 1px solid #dee2e6; cursor: pointer; }
+    .video-playing { background: #d4edda; }
     footer { background: #2C3E50; color: #ccc; padding: 20px 0; }
-    /* Additional styling for new controls */
-    .control-buttons { margin-top: 15px; }
   </style>
 </head>
 <body data-spy="scroll" data-target="#mainNav" data-offset="70">
@@ -45,7 +43,7 @@
            <li class="nav-item"><a class="nav-link" href="#howto">How to Use</a></li>
            <li class="nav-item"><a class="nav-link" href="#playlist">Playlist</a></li>
            <li class="nav-item"><a class="nav-link" href="#hand-gesture-control">Hand Gesture Control</a></li>
-           <li class="nav-item"><a class="nav-link" href="#upload">Upload Song</a></li>
+           <li class="nav-item"><a class="nav-link" href="#upload">Upload Video</a></li>
            <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
          </ul>
       </div>
@@ -55,10 +53,10 @@
   <!-- Home Section -->
   <header id="home" class="jumbotron text-center section" style="margin-top: 50px;">
     <div class="container">
-      <h1 class="display-4">GestureSymphony – Conduct a full symphony using only your hands</h1>
-      <p class="lead">Control your local music with simple hand gestures.</p>
+      <h1 class="display-4">GestureSymphony – Control video playback using your hands</h1>
+      <p class="lead">Capture your video feed, process the frame for gesture detection, and choose which video to play.</p>
       <hr class="my-4">
-      <p>Powered by MediaPipe Hands, OpenCV, and pygame, this site lets you play, pause, skip tracks, adjust volume, and more.</p>
+      <p>Crafted with cutting-edge computer vision and intuitive hand gesture recognition technology.</p>
     </div>
   </header>
 
@@ -80,12 +78,7 @@
           <div class="card mb-4">
             <div class="card-header text-center bg-secondary text-white">Step 2</div>
             <div class="card-body">
-              <p>Use these gestures:</p>
-              <ul>
-                <li>1 finger → Pause</li>
-                <li>2 fingers → Play</li>
-                <li>3 fingers → Next Track</li>
-              </ul>
+              <p>Use hand gestures to capture a frame and see the processed result.</p>
             </div>
           </div>
         </div>
@@ -93,14 +86,16 @@
           <div class="card mb-4">
             <div class="card-header text-center bg-secondary text-white">Step 3</div>
             <div class="card-body">
-              <p>Click "Capture Frame" to process your gesture and control the music.</p>
+              <p>
+                Use gestures to control video:<br>
+                - ONE: Pause video<br>
+                - TWO: Play video<br>
+                - THREE: Next video<br>
+                - FOUR: Previous video
+              </p>
             </div>
           </div>
         </div>
-      </div>
-      <!-- Start Music Button -->
-      <div class="text-center">
-        <button id="startBtn" class="btn btn-success btn-lg">Start Music</button>
       </div>
     </div>
   </section>
@@ -108,16 +103,23 @@
   <!-- Playlist Section -->
   <section id="playlist" class="section bg-light">
     <div class="container">
-      <h2 class="text-center">Playlist</h2>
-      <div id="songList" class="list-group">
-        {% for song in songs %}
-          <div class="song-item list-group-item {% if song.isPlaying %}song-playing{% endif %}">
-            {{ song.name }} {% if song.isPlaying %} <span class="badge badge-success">Now Playing</span>{% endif %}
+      <h2 class="text-center">Video Playlist</h2>
+      <div class="row">
+        <!-- Left Column: Video Player -->
+        <div class="col-md-6">
+          <video id="videoPlayer" controls width="100%">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <!-- Right Column: Playlist -->
+        <div class="col-md-6">
+          <div id="videoList" class="list-group">
+            <!-- Playlist items will be injected here -->
           </div>
-        {% endfor %}
-      </div>
-      <div class="text-center mt-3">
-        <button id="refreshPlaylist" class="btn btn-info">Refresh Playlist</button>
+          <div class="text-center mt-3">
+            <button id="refreshPlaylist" class="btn btn-info">Refresh Playlist</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -134,14 +136,6 @@
           <button id="stopCamera" class="btn btn-danger btn-block mb-2" style="display: none;">Stop Camera</button>
           <video id="video" autoplay style="display: none;"></video>
           <button id="capture" class="btn btn-primary btn-block mt-2" style="display: none;">Capture Frame</button>
-          <!-- Additional Controls: Previous Track and Volume Slider -->
-          <div class="control-buttons mt-3">
-            <button id="prevTrack" class="btn btn-warning btn-block">Previous Track</button>
-            <div class="form-group">
-              <label for="volumeSlider">Volume</label>
-              <input type="range" class="form-control-range" id="volumeSlider" min="0" max="100" value="100">
-            </div>
-          </div>
         </div>
         <div class="col-md-6 result-container">
           <h4>Processed Result</h4>
@@ -160,14 +154,14 @@
   <!-- Upload Section -->
   <section id="upload" class="section bg-light">
     <div class="container">
-      <h2 class="text-center">Upload Song</h2>
+      <h2 class="text-center">Upload Video</h2>
       <div class="row justify-content-center">
         <div class="col-md-6">
           <form id="uploadForm" enctype="multipart/form-data">
             <div class="form-group">
-              <input type="file" name="file" id="fileInput" class="form-control-file" accept=".mp3,.wav" required>
+              <input type="file" name="file" id="fileInput" class="form-control-file" accept=".mp4,.webm" required>
             </div>
-            <button type="submit" class="btn btn-warning btn-block">Upload Song</button>
+            <button type="submit" class="btn btn-warning btn-block">Upload Video</button>
           </form>
         </div>
       </div>
@@ -197,23 +191,26 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
+    // Global variables for playlist management and debouncing
+    let playlistArray = [];
+    let currentVideoIndex = 0;
+    let lastActionGesture = "";
+    let lastActionTime = 0; // in ms
+
     // Video and Canvas Setup
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const processedImg = document.getElementById('processed');
     const captureButton = document.getElementById('capture');
     const spinner = document.getElementById('spinner');
-    const startBtn = document.getElementById('startBtn');
     const startCameraBtn = document.getElementById('startCamera');
     const stopCameraBtn = document.getElementById('stopCamera');
     const refreshPlaylistBtn = document.getElementById('refreshPlaylist');
-    const songList = document.getElementById('songList');
+    const videoList = document.getElementById('videoList');
     const uploadForm = document.getElementById('uploadForm');
-    const prevTrackBtn = document.getElementById('prevTrack');
-    const volumeSlider = document.getElementById('volumeSlider');
-    let stream = null; // to store the media stream
+    const videoPlayer = document.getElementById('videoPlayer');
+    let stream = null;
 
-    // Function to start the camera feed
     function startCamera() {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -233,7 +230,6 @@
       }
     }
 
-    // Function to stop the camera feed
     function stopCamera() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -244,11 +240,10 @@
       stopCameraBtn.style.display = 'none';
     }
 
-    // Start/Stop Camera Button Event Listeners
     startCameraBtn.addEventListener('click', startCamera);
     stopCameraBtn.addEventListener('click', stopCamera);
 
-    // Capture Frame and send to /process endpoint
+    // Capture frame and process for gesture
     captureButton.addEventListener('click', function() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -265,6 +260,25 @@
       .then(data => {
         spinner.style.display = 'none';
         processedImg.src = data.processed_image;
+        // Gesture-based video control:
+        if (data.gesture === "TWO") {
+          videoPlayer.src = getVideoSrc(currentVideoIndex);
+          videoPlayer.play();
+        } else if (data.gesture === "ONE") {
+          videoPlayer.pause();
+        } else if (data.gesture === "THREE" || data.gesture === "FOUR") {
+          const now = new Date().getTime();
+          
+          if (lastActionGesture !== data.gesture || (now - lastActionTime) > 1000) {
+            if (data.gesture === "THREE") {
+              nextVideo();
+            } else if (data.gesture === "FOUR") {
+              prevVideo();
+            }
+            lastActionGesture = data.gesture;
+            lastActionTime = now;
+          }
+        }
       })
       .catch(error => {
         spinner.style.display = 'none';
@@ -272,64 +286,60 @@
       });
     });
 
-    // Start Music Button
-    startBtn.addEventListener('click', function() {
-      fetch('/start', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-          alert(data.status);
-          refreshPlaylist();
-        })
-        .catch(error => console.error('Error:', error));
-    });
-
-    // Previous Track Button
-    prevTrackBtn.addEventListener('click', function() {
-      fetch('/prev', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-          alert(data.status);
-          refreshPlaylist();
-        })
-        .catch(error => console.error('Error:', error));
-    });
-
-    // Volume Slider Event Listener
-    volumeSlider.addEventListener('input', function() {
-      const vol = volumeSlider.value / 100;
-      fetch('/set_volume', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ volume: vol })
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log(data.status);
-      })
-      .catch(error => console.error('Error:', error));
-    });
-
-    // Refresh Playlist Function
+    // Fetch playlist from server and update UI and local array
     function refreshPlaylist() {
-      fetch('/songs')
+      fetch('/videos')
         .then(response => response.json())
         .then(data => {
+          // Override server's isPlaying with client-side index
+          playlistArray = data.videos;
           let html = '';
-          data.songs.forEach(song => {
-            html += `<div class="song-item list-group-item ${song.isPlaying ? 'song-playing' : ''}">
-                        ${song.name} ${song.isPlaying ? '<span class="badge badge-success">Now Playing</span>' : ''}
+          playlistArray.forEach((videoItem, index) => {
+            html += `<div class="video-item list-group-item ${index === currentVideoIndex ? 'video-playing' : ''}" data-video-src="/videos/${videoItem.name}" data-index="${index}">
+                        ${videoItem.name} ${index === currentVideoIndex ? '<span class="badge badge-success">Now Playing</span>' : ''}
                      </div>`;
           });
-          songList.innerHTML = html;
+          videoList.innerHTML = html;
         })
         .catch(error => console.error('Error:', error));
     }
 
     refreshPlaylistBtn.addEventListener('click', refreshPlaylist);
-    // Auto-refresh playlist every 1 second
     setInterval(refreshPlaylist, 1000);
 
-    // Upload Song Form Submission
+    // Client-side next/previous functions
+    function nextVideo() {
+      if (playlistArray.length === 0) return;
+      currentVideoIndex = (currentVideoIndex + 1) % playlistArray.length;
+      videoPlayer.src = getVideoSrc(currentVideoIndex);
+      videoPlayer.play();
+      refreshPlaylist();
+    }
+
+    function prevVideo() {
+      if (playlistArray.length === 0) return;
+      currentVideoIndex = (currentVideoIndex - 1 + playlistArray.length) % playlistArray.length;
+      videoPlayer.src = getVideoSrc(currentVideoIndex);
+      videoPlayer.play();
+      refreshPlaylist();
+    }
+
+    function getVideoSrc(index) {
+      return "/videos/" + playlistArray[index].name;
+    }
+
+    // Allow clicking on playlist items to manually select video
+    videoList.addEventListener('click', function(e) {
+      const item = e.target.closest('.video-item');
+      if (item) {
+        currentVideoIndex = parseInt(item.getAttribute('data-index'));
+        videoPlayer.src = item.getAttribute('data-video-src');
+        videoPlayer.play();
+        refreshPlaylist();
+      }
+    });
+
+    // Upload video form submission
     uploadForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const fileInput = document.getElementById('fileInput');
